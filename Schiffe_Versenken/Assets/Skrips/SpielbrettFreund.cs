@@ -12,6 +12,7 @@ public class SpielbrettFreund : MonoBehaviour
     private Vector2Int[] neighbours = new Vector2Int[4];
     private List<Vector2Int> notDestroyedHits = new List<Vector2Int>();
     private Spielbrett spielbrett;
+    private bool beginOfzug;
 
     private void Start()
     {
@@ -21,15 +22,26 @@ public class SpielbrettFreund : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //if (!Spielbrett.zug && Spielbrett.zugNummer > -1 && Spielbrett.difficulty == 1)
-        if (spielbrett.zugNummer > -1)
+        if (spielbrett.zug)
         {
+            beginOfzug = true;
+        }
+
+        //if (!Spielbrett.zug && Spielbrett.zugNummer > -1 && Spielbrett.difficulty == 1)
+        if (spielbrett.zugNummer >= 0 && !spielbrett.zug)
+        {
+            if (beginOfzug)
+            {
+                delay = Random.Range(0.5f, 2f);
+                beginOfzug = false;
+            }
+
             if (delay > 0)
                 delay -= Time.deltaTime;
             if (delay <= 0)
                 shoot = true;
 
-            if (!spielbrett.CountdownReset() && shoot && spielbrett.countdown != 2)
+            if (shoot)
             {
                 if (spielbrett.difficulty == 1) //Difficulty Easy-------------------------------------------------------------
                     platziert = GetComponentInParent<Spielbrett>().PlaceMark(RandomPoint(), ref hitShip); //zufälliger Schuss
@@ -113,13 +125,17 @@ public class SpielbrettFreund : MonoBehaviour
 
                     if (hitShip != null)
                     {
+                        spielbrett.countD.CountdownStart(spielbrett.countD.GetSpeed() * 1.5f);
+                        if (spielbrett.countD.GetProgress() - 10 <= 0)
+                            spielbrett.countD.SetPercentage(0.1f);
+                        else spielbrett.countD.SetPercentage(spielbrett.countD.GetProgress() - 10);
+
+                        delay = Random.Range(1f, 3f);
                         spielbrett.Gefahrenwarnung();
-                        delay = Random.Range(0.5f, 2f);
                     }
-                    else if (!spielbrett.zug)
+                    if (hitShip == null)
                     {
-                        spielbrett.CountdownStart(0.1f);
-                        delay = 0;
+                        spielbrett.countD.SetPercentage(100);
                     }
                 }
             }

@@ -14,7 +14,7 @@ public class KeyboardMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (schiff.selected && schiff.spielbrett.zug && schiff.spielbrett.zugNummer == 0)
+        if (schiff.selected && schiff.spielbrett.zug && schiff.spielbrett.zugNummer == -1)
         {
             if (Input.GetKeyDown(KeyCode.W)) //Oben
             {

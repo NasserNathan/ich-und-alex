@@ -16,10 +16,10 @@ public class Spielbrett : MonoBehaviour
     public Sprite MarkTreffer;
     public Sprite MarkZerstört;
     [Header("Spiel:")]
-    public float zugZeitInMinuten;
-    public float countdownInSek;
+    public float zugZeitInSekunden;
     public bool Zug;
     public int zNr;
+    public bool placedships;
 
     private Vector2Int size = new Vector2Int(16, -16); //Größe eines Spielfeldes (bitte noch nicht verändern!)
     [SerializeField]
@@ -32,18 +32,18 @@ public class Spielbrett : MonoBehaviour
 
     public bool zug { get; private set; } //wenn true, Spieler am Zug, wenn false Feind am Zug
     public int zugNummer { get; private set; }
-    public int countdown { get; private set; }
     public bool loose { get; private set; }
     public bool win { get; private set; }
     public bool tryingToStart { get; private set; }
+
     public int difficulty;
-    private int oldcountdown;
-    public float y { get; set; }
+
     private bool gefahrenwarnung;
     private float timer;
     private bool oldgefahrenwarnung;
     private GameObject winOBJ;
     private GameObject looseOBJ;
+
     public Countdown countD;
     private void Awake()
     {
@@ -60,63 +60,64 @@ public class Spielbrett : MonoBehaviour
         //Variablen für Inspektor
         Zug = zug;
         zNr = zugNummer;
+        placedships = CheckPlacedShips();
 
-        //Anti-Division-durch-0
-        if (zugZeitInMinuten == 0)
-            zugZeitInMinuten = 0.0001f;
 
-        //Zugzeit-Countdown
-        //if (countdown == 1) //Verringerung
-        //{
-        //    if (y >= 36)
-        //        zugNummer++;
-        //    if (y <= 0)
-        //    {
-        //        y = 0;
-        //        if (CheckPlacedShips(1))
-        //        {
-        //            zug = false;
-        //            countdown = 0;
-        //            tryingToStart = false;
-        //        }
-        //        else tryingToStart = true;
-        //    }
-        //    else y -= Time.deltaTime * (1 / (zugZeitInMinuten * (5f / 3f)));
-
-        //    transform.parent.GetChild(1).localScale = new Vector3(transform.GetChild(1).localScale.x - 0.5f, y, transform.GetChild(1).localScale.z);
-        //}
-        //else if (countdown == -1) //Erhöhung
-        //{
-        //    if (y >= 36)
-        //    {
-        //        y = 36;
-        //        countdown = 0;
-        //    }
-        //    else y += Time.deltaTime * (y + 1) * 5;
-
-        //    transform.parent.GetChild(1).localScale = new Vector3(transform.GetChild(1).localScale.x - 0.5f, y, transform.GetChild(1).localScale.z);
-        //}
-        //countdownInSek = y * (5f / 3f) * zugZeitInMinuten;
-
-        if (countD.GetProgress() == 0)
+        //Countdown-------------------------------------------
+        if (zugNummer == -1) //Schiffe Platzieren
         {
-            if (zugNummer == -1)
+            countD.SetColor(Color.blue);
+            if (countD.GetProgress() == 0)
             {
-                countD.SetPercentage(100);
-                countD.CountdownStart(-15, true);
                 zug = true;
+                if (!countD.GetStatus())
+                    countD.SetPercentage(100);
+                countD.CountdownStart(-45, true);
             }
-            else
+            if (countD.GetProgress() == 0 && countD.GetStatus())
+            {
+                tryingToStart = true;
+                if (CheckPlacedShips())
+                {
+                    tryingToStart = false;
+                    zugNummer++;
+                }
+            }
+        }
+        if (zugNummer >= 0 && !Methoden.Odd(zugNummer)) //Gegner am Zug
+        {
+            countD.SetColor(Color.red);
+            if (countD.GetProgress() == 0)
             {
                 zug = false;
-                countD.CountdownStart(0.75f, true);
+                countD.CountdownStart(20, true);
             }
-            zugNummer++;
+            else if (countD.GetProgress() == 100)
+            {
+                zug = true;
+                zugNummer++;
+            }
         }
-        if (countD.GetProgress() == 100)
+        if (zugNummer >= 0 && Methoden.Odd(zugNummer)) //Spieler am Zug
         {
-
+            countD.SetColor(Color.green);
+            if (countD.GetProgress() == 100)
+            {
+                zug = true;
+                countD.CountdownStart(-20, true);
+            }
+            else if (countD.GetProgress() == 0)
+            {
+                zug = false;
+                zugNummer++;
+            }
         }
+
+        //Inspektor Variable Zugzeit in Sekunden
+        if (countD.GetSpeed() > 0)
+            zugZeitInSekunden = (100 - countD.GetProgress()) / countD.GetSpeed();
+        else if (countD.GetSpeed() != 0)
+            zugZeitInSekunden = countD.GetProgress() / - countD.GetSpeed();
 
 
         //Lautstärke langsam erhöhen bis 0.1f am Anfang des Kampfes
@@ -129,7 +130,7 @@ public class Spielbrett : MonoBehaviour
         if (looseOBJ.activeSelf)
             looseOBJ.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, Mathf.Lerp(looseOBJ.GetComponent<SpriteRenderer>().color.a, 1f, Time.deltaTime * 0.25f));
 
-        //Gefahrenwarnung
+        //Gefahrenwarnung (ziemlich laut und aufdringlich grell - muss noch geändert werden)
         if (gefahrenwarnung)
         {
             if (gefahrenwarnung != oldgefahrenwarnung)
@@ -609,95 +610,6 @@ public class Spielbrett : MonoBehaviour
     }
 
     /// <summary>
-    /// Startet den Countdown der Zugzeit und gibt true zurück solange er läuft.
-    /// </summary>
-    public bool CountdownStart(float ZeitInMinuten)
-    {
-        if (countdown == 0 && y > 0)
-        {
-            GameObject.Find("Spielbrett").GetComponent<Spielbrett>().zug = true;
-            GameObject.Find("Spielbrett").GetComponent<Spielbrett>().zugZeitInMinuten = ZeitInMinuten;
-            countdown = 1;
-        }
-        if (y <= 0)
-        {
-            GameObject.Find("Spielbrett").GetComponent<Spielbrett>().zug = false;
-            y = 0;
-            if (countdown != 2)
-                countdown = 0;
-            return false;
-        }
-        else return true;
-    }
-
-    /// <summary>
-    /// Unterbricht den Countdown und gibt true zurück, solange er unterbrochen ist.
-    /// </summary>
-    public bool CountdownPause(bool zug = false)
-    {
-        if (countdown != 2)
-        {
-            oldcountdown = countdown;
-            GameObject.Find("Spielbrett").GetComponent<Spielbrett>().zug = zug;
-            countdown = 2;
-        }
-        if (countdown == 2)
-        {
-            return true;
-        }
-        else return false;
-    }
-
-    /// <summary>
-    /// Setzt den unterbrochenen Countdown fort.
-    /// </summary>
-    public void CountdownContinue(bool zug = false)
-    {
-        if (countdown == 2)
-        {
-            countdown = 0;
-            if (oldcountdown == 1)
-            {
-                CountdownStart(GameObject.Find("Spielbrett").GetComponent<Spielbrett>().zugZeitInMinuten);
-            }
-            else if (oldcountdown == -1)
-                CountdownReset();
-        }
-    }
-
-    /// <summary>
-    /// Beendet den Countdown der Zugzeit vorzeitig.
-    /// </summary>
-    public void CountdownEnd()
-    {
-        if (countdown == 1)
-        {
-            GameObject.Find("Spielbrett").GetComponent<Spielbrett>().zug = false;
-            GameObject.Find("Spielbrett").GetComponent<Spielbrett>().zugZeitInMinuten = 0.01f;
-        }
-    }
-
-    /// <summary>
-    /// Setzt den Countdown der Zugzeit zurück und gibt true zurück solange er noch zurückgesetzt wird.
-    /// </summary>
-    public bool CountdownReset()
-    {
-        if (countdown == 0 && y < 36)
-        {
-            GameObject.Find("Spielbrett").GetComponent<Spielbrett>().zug = false;
-            countdown = -1;
-        }
-        if (y >= 36)
-        {
-            y = 36;
-            if (countdown != 2)
-                countdown = 0;
-            return false;
-        }
-        else return true;
-    }
-
-    /// <summary>
     /// Überprüft die Vorhandenheit der Schiffe pro Spielfeld und beendet gegebenenfalls den Kampf (gibt in diesem Fall true zurück).
     /// </summary>
     public bool CheckIntactShips()
@@ -717,7 +629,7 @@ public class Spielbrett : MonoBehaviour
             looseOBJ.SetActive(true);
             GetComponentsInParent<AudioSource>()[0].volume = 0.01f;
             loose = true;
-            CountdownPause();
+            countD.CountdownPause();
             return true;
         }
         else if (intactShipsSpF2 == 0) //win
@@ -726,7 +638,7 @@ public class Spielbrett : MonoBehaviour
             GameObject.Find("Spielbrett").GetComponentsInParent<AudioSource>()[2].Play(); //Music from Pixabay
             GameObject.Find("Spielbrett").GetComponentsInParent<AudioSource>()[0].volume = 0.01f;
             win = true;
-            CountdownPause();
+            countD.CountdownPause();
             return true;
         }
         return false;
@@ -827,12 +739,6 @@ public class Spielbrett : MonoBehaviour
         CreateShip("Zerstörer2", SpriteZerstörer, Schifftyp.Zerstörer(), 2);
         CreateShip("Uboot1", SpriteUboot, Schifftyp.Uboot(), 2);
         CreateShip("Uboot2", SpriteUboot, Schifftyp.Uboot(), 2);
-
-        CountdownContinue();
-        CountdownStart(0.5f);
-
-        countD.SetPercentage(100);
-        countD.CountdownStart(-30, true);
     }
 
     /// <summary>
@@ -841,7 +747,6 @@ public class Spielbrett : MonoBehaviour
     public void EndGame()
     {
         ids.Clear();
-        CountdownPause();
         countD.CountdownStop();
 
         //Löschen aller Schiffe
@@ -861,7 +766,7 @@ public class Spielbrett : MonoBehaviour
             Destroy(transform.GetChild(1).GetChild(0).GetChild(i).gameObject);
         //Zurücksetzen des Ladebalkens
         GetComponentInChildren<LoadingBar>().Initialize();
-        GetComponentInChildren<LoadingBar>().SetProgess(0f);
+        GetComponentInChildren<LoadingBar>().SetProgess(0);
 
         transform.parent.GetComponent<AudioSource>().Stop();
     }

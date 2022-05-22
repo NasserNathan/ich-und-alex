@@ -38,9 +38,16 @@ public class SpielfeldFeind : MonoBehaviour
                     platziert = spielbrett.PlaceMark(Methoden.Vector2ToVector2Int(transform.position + bc.center), ref hitShip);
                 }
             }
+            if (platziert && hitShip != null)
+            {
+                spielbrett.countD.CountdownStart(spielbrett.countD.GetSpeed() * 1.5f);
+                if (spielbrett.countD.GetProgress() + 10 >= 100)
+                    spielbrett.countD.SetPercentage(99.9f);
+                else spielbrett.countD.SetPercentage(spielbrett.countD.GetProgress() + 10);
+            }
             if (platziert && hitShip == null)
             {
-                spielbrett.CountdownEnd();
+                spielbrett.countD.SetPercentage(0);
             }
         }
     }

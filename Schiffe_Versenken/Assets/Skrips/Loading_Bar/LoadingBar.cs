@@ -164,4 +164,14 @@ public class LoadingBar : MonoBehaviour
 
         return true;
     }
+
+    public void SetColor(Color color)
+    {
+        Loading_bar_color = color;
+        transform.GetComponentInChildren<LoadingBar_Bar>().GetComponent<SpriteRenderer>().color = Loading_bar_color;
+    }
+    public Color GetColor()
+    {
+        return Loading_bar_color;
+    }
 }

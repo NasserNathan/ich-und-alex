@@ -21,7 +21,7 @@ public class Methoden
     /// <summary>
     /// Gibt zurück, ob i ungerade oder gerade ist.
     /// </summary>
-    private static bool Odd(int i)
+    public static bool Odd(int i)
     {
             if (i % 2 == 0) return false;
             else if (i == 0) return false;

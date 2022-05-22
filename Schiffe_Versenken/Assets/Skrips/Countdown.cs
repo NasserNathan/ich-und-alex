@@ -9,7 +9,7 @@ public class Countdown : MonoBehaviour
     private float oldSpeed = 0;
     [SerializeField]
     private bool status = false;
-    public float percentage = 0;
+    private float percentage = 0;
     private LoadingBar loadingBar;
 
     // Start is called before the first frame update
@@ -21,6 +21,7 @@ public class Countdown : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        //hier müssen noch fließende Übergänge zwischen Prozentänderungen integriert werden
         if (status)
         {
             percentage += directionalSpeed * Time.deltaTime;
@@ -99,6 +100,9 @@ public class Countdown : MonoBehaviour
     /// </summary>
     public void SetPercentage(float percentage)
     {
+        if (loadingBar == null)
+            loadingBar = GetComponent<LoadingBar>();
+
         if (percentage <= 0)
         {
             if (directionalSpeed < 0)
@@ -121,8 +125,24 @@ public class Countdown : MonoBehaviour
     /// <returns></returns>
     public float GetProgress(bool decimalNumber = false)
     {
+        if (loadingBar == null)
+            loadingBar = GetComponent<LoadingBar>();
+
         if (decimalNumber)
             return loadingBar.GetProgess();
         return percentage;
     }
+
+    public void SetColor(Color color)
+    {
+        if (loadingBar == null)
+            loadingBar = GetComponent<LoadingBar>();
+
+        if (color != loadingBar.GetColor())
+            loadingBar.SetColor(color);
+    }
+
+    public bool GetStatus() { return status; }
+
+    public float GetSpeed() { return directionalSpeed; }
 }
