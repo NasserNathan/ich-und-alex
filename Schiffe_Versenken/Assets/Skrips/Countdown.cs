@@ -100,9 +100,6 @@ public class Countdown : MonoBehaviour
     /// </summary>
     public void SetPercentage(float percentage)
     {
-        if (loadingBar == null)
-            loadingBar = GetComponent<LoadingBar>();
-
         if (percentage <= 0)
         {
             if (directionalSpeed < 0)

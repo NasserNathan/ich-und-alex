@@ -72,6 +72,7 @@
     <Compile Include="Assets\Skrips\Loading_Bar\LoadingBar_Left.cs" />
     <Compile Include="Assets\Skrips\Loading_Bar\LoadingBar.cs" />
     <Compile Include="Assets\Skrips\SpielbrettFreund.cs" />
+    <Compile Include="Assets\Skrips\GUI\ShowTextOfInventorySlot.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">

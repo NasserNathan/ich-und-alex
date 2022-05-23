@@ -72,7 +72,7 @@ public class Spielbrett : MonoBehaviour
                 zug = true;
                 if (!countD.GetStatus())
                     countD.SetPercentage(100);
-                countD.CountdownStart(-45, true);
+                countD.CountdownStart(-10, true);
             }
             if (countD.GetProgress() == 0 && countD.GetStatus())
             {
@@ -570,6 +570,7 @@ public class Spielbrett : MonoBehaviour
     /// Platziert eine Marke an vorgesehener Position entsprechend der Belegung des Kästchens (Schiff/kein Schiff) und des Spielfeldes und spielt Musik ab.
     /// </summary>
     /// <param name="ship">Übergabe des getroffenen Schiffes</param>
+    /// <returns>true, wenn eine Marke platziert wurde; false wenn keine platziert werden konnte</returns>
     public bool PlaceMark(Vector2Int worldPosition, ref Schiff ship)
     {
         int spielfeld;
@@ -607,6 +608,123 @@ public class Spielbrett : MonoBehaviour
                 GetComponentsInParent<AudioSource>()[5].Play(); //Music from Pixabay
         }
         return platziert;
+    }
+
+    /// <summary>
+    /// Führt verschiedene spezialattacken aus. type = 1 -> Bombe; type = 2 -> Sonar
+    /// </summary>
+    /// <param name="ship">(leeres Array)</param>
+    /// <param name="type">Typ der Attacke</param>
+    /// <returns>Gibt die Anzahl an Treffern an. Gibt -1 zurück, wenn keine platziert werden konnte</returns>
+    public int SpecialMarks(Vector2Int worldPosition, ref Schiff[] ship, int type)
+    {
+        int spielfeld;
+        if (worldPosition.x > origin2.x && worldPosition.x < origin2.x + size.x && worldPosition.y < origin2.y && worldPosition.y > origin2.y + size.y)
+            spielfeld = 2;
+        else if (worldPosition.x > origin1.x && worldPosition.x < origin1.x + size.x && worldPosition.y < origin1.y && worldPosition.y > origin1.y + size.y)
+            spielfeld = 1;
+        else
+        {
+            ship = null;
+            return 0;
+        }
+
+        ship = new Schiff[9];
+        int hit = 0;
+
+        if (type == 1)
+        {
+            List<Schiff> ships = new List<Schiff>();
+
+            if (PlaceMark(worldPosition + new Vector2Int(1, 1), ref ship[0]))
+            {
+                ships.Add(ship[0]);
+                hit++;
+            }
+
+            if (PlaceMark(worldPosition + new Vector2Int(0, 1), ref ship[1]))
+            {
+                ships.Add(ship[1]);
+                hit++;
+            }
+
+            if (PlaceMark(worldPosition + new Vector2Int(-1, 1), ref ship[2]))
+            {
+                ships.Add(ship[2]);
+                hit++;
+            }
+
+            if (PlaceMark(worldPosition + new Vector2Int(1, 0), ref ship[3]))
+            {
+                ships.Add(ship[3]);
+                hit++;
+            }
+
+            if (PlaceMark(worldPosition + new Vector2Int(0, 0), ref ship[4]))
+            {
+                ships.Add(ship[4]);
+                hit++;
+            }
+
+            if (PlaceMark(worldPosition + new Vector2Int(-1, 0), ref ship[5]))
+            {
+                ships.Add(ship[5]);
+                hit++;
+            }
+
+            if (PlaceMark(worldPosition + new Vector2Int(1, -1), ref ship[6]))
+            {
+                ships.Add(ship[6]);
+                hit++;
+            }
+
+            if (PlaceMark(worldPosition + new Vector2Int(0, -1), ref ship[7]))
+            {
+                ships.Add(ship[7]);
+                hit++;
+            }
+
+            if (PlaceMark(worldPosition + new Vector2Int(-1, -1), ref ship[8]))
+            {
+                ships.Add(ship[8]);
+                hit++;
+            }
+
+            ship = ships.ToArray();
+            if (hit == 0)
+                hit = -1;
+            return hit;
+        }
+
+        if (type == 2)
+        {
+            ship = null;
+            Schiff[] schiffe = GameObject.Find("Spielbrett").transform.GetChild(spielfeld - 1).GetComponentsInChildren<Schiff>();
+            foreach (Schiff schiff in schiffe)
+            {
+
+                if (schiff.MarkKästchen(worldPosition))
+                    hit++;
+
+                for (int x = 1; x < size.x; x++)
+                {
+                    if (schiff.MarkKästchen(worldPosition + new Vector2Int(x, 0)))
+                        hit++;
+                    if (schiff.MarkKästchen(worldPosition - new Vector2Int(x, 0)))
+                        hit++;
+                }
+                for (int y = 1; y < size.x; y++)
+                {
+                    if (schiff.MarkKästchen(worldPosition + new Vector2Int(0, y)))
+                        hit++;
+                    if (schiff.MarkKästchen(worldPosition - new Vector2Int(0, y)))
+                        hit++;
+                }
+            }
+            return hit;
+        }
+
+        return -1;
     }
 
     /// <summary>

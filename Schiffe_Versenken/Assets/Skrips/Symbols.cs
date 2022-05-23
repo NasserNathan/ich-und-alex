@@ -150,4 +150,10 @@ public class Symbols : MonoBehaviour
         if (name == "Schiff") return GameObject.Find("Spielbrett").GetComponent<Symbols>().Symbol_Schiff;
         return null;
     }
+
+    public static string GetFromAlphabet(int index)
+    {
+        string[] alphabet = new string[27] { "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "ß" };
+        return alphabet[index];
+    }
 }
